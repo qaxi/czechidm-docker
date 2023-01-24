@@ -35,3 +35,11 @@ docker-compose up
 
 MIT License
 
+## Quick notes
+
+```
+How to clean maven artifacts?
+? geronimo-jms_1.1_spec-1.1.1.pom
+? fakesmtp-2.0.jar
+? maven clean
+```
