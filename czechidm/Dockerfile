@@ -90,7 +90,10 @@ RUN cd "/tmp/CzechIdMng-$CZECHIDM_VERSION/Realization/backend/aggregator" \
     && /idmbuild/maven/current/bin/mvn install -DskipTests
 
 RUN cp "/tmp/CzechIdMng-$CZECHIDM_VERSION/Realization/backend/app/target/idm-backend.war" \
-        "$CZECHIDM_BUILDROOT/product/idm-app-$CZECHIDM_VERSION.war"
+        "$CZECHIDM_BUILDROOT/product/idm.war"
+
+# ????
+RUN cp "$CZECHIDM_BUILDROOT/product/idm.war" /opt/tomcat/current/webapps/
 
 # We just copy the war into the container here. We do not extract the idm-tool,
 # because it also needs whole lib/ with it - that would make more than 100MB of
