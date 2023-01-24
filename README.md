@@ -22,13 +22,14 @@ docker-compose up
 
 ## ToDo
 
-[x] - make Docker images build separately
-[x] - make Docker compose build
-[x] - make Docker compose run containers
-[ ] - make CzechIDM work
-[ ] - remove dirty trick for building tomcat image dependency
-[ ] - strip rpms from images
-[ ] - strip Maven dependencies and build artifacts
+
+- [x] make Docker images build separately
+- [x] make Docker compose build
+- [x] make Docker compose run containers
+- [ ] make CzechIDM work
+- [ ] remove dirty trick for building tomcat image dependency
+- [ ] strip rpms from images
+- [ ] strip Maven dependencies and build artifacts
 
 ## License
 
