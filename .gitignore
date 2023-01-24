@@ -1,0 +1,10 @@
+# It could contain sensitive information
+environment.env
+.env
+idm_db.pwfile
+idm_jwt.pwfile
+db_report.pwfile
+idm_mailer.pwfile
+
+# potential database files
+pg_data

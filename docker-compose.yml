@@ -1,0 +1,147 @@
+# More-elaborate example compose file for CzechIdM image.
+# In fact, not many parameters are mandatory - see README.md.
+version: '3.2'
+
+services:
+  # extist imediatelly - just for sure you can build czechidm-tomcat image
+  setup:
+    image: czechidm-tomcat:9.0.62-r1
+    build:
+      context: tomcat
+        #args:
+    command: /bin/true
+
+  appserver:
+    image: czechidm:12.2.3-r0
+    hostname: czechidm
+    build:
+      context: czechidm
+    depends_on:
+      - setup
+      - postgres
+    ports:
+      - 8009:8009
+      - 8080:8080
+    # env_file: environment.env
+    environment:
+      - JAVA_XMS="${JAVA_XMS:-1024M}"
+      - JAVA_XMX="${JAVA_XMX:-2048M}"
+      - TZ="${TZ:-Europe/Prague}"
+      - DOCKER_TOMCAT_ENABLE_AJP="${DOCKER_TOMCAT_ENABLE_AJP:-}"
+#      - DOCKER_TOMCAT_DISABLE_ACCESS_LOG="${DOCKER_TOMCAT_DISABLE_ACCESS_LOG:-}"
+      - DOCKER_SECURE_SECRETS="${DOCKER_SECURE_SECRETS:-yes}"
+      - CZECHIDM_APP_INSTANCEID="${CZECHIDM_APP_INSTANCEID:-idm-primary}"
+      - CZECHIDM_APP_STAGE="${CZECHIDM_APP_STAGE:-docker-image}"
+      - CZECHIDM_DB_URL="${CZECHIDM_DB_URL:-jdbc:postgresql://postgres:5432/czechidm}"
+      - CZECHIDM_DB_USER="${CZECHIDM_DB_USER:-czechidm}"
+      - CZECHIDM_DB_PASSFILE="${CZECHIDM_DB_PASSFILE:-/run/secrets/db.pwfile}"
+      - CZECHIDM_DB_DRIVERCLASS="${CZECHIDM_DB_DRIVERCLASS:-org.postgresql.Driver}"
+      - CZECHIDM_DB_POOL_SIZE="${CZECHIDM_DB_POOL_SIZE:-100}"
+      # There is a separate datasource for the standalone generic SQL report.
+      # Generic SQL report is a part of the CzechIdM RPT module.
+      #- CZECHIDM_REPORTS_DB=czechidm_report
+      #- CZECHIDM_REPORTS_DB_URL="${CZECHIDM_REPORTS_DB_URL:-jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${CZECHIDM_REPORTS_DB}"
+      #- CZECHIDM_REPORTS_DB_USER="${CZECHIDM_REPORTS_DB_USER:-czechidm_report}"
+      #- CZECHIDM_REPORTS_DB_PASSFILE="${CZECHIDM_REPORTS_DB_PASSFILE:-/run/secrets/db_report.pwfile}"
+      #- CZECHIDM_REPORTS_DB_DRIVERCLASS="${CZECHIDM_REPORTS_DB_DRIVERCLASS:-org.postgresql.Driver}"
+      - CZECHIDM_ALLOWED_ORIGINS="${CZECHIDM_ALLOWED_ORIGINS:-http://localhost}"
+      - CZECHIDM_JWT_TOKEN_PASSFILE="${CZECHIDM_JWT_TOKEN_PASSFILE:-/run/secrets/jwt.pwfile}"
+#      - CZECHIDM_LOGGING_LEVEL="${CZECHIDM_LOGGING_LEVEL:-INFO}"
+#      - CZECHIDM_LOGGING_LEVEL_DB="${CZECHIDM_LOGGING_LEVEL_DB:-ERROR}"
+#      - CZECHIDM_AUDIT_LOGGING_ENABLED="${CZECHIDM_AUDIT_LOGGING_ENABLED:-}"
+#      - DOCKER_TOMCAT_ENABLE_FILE_LOGGING="${DOCKER_TOMCAT_ENABLE_FILE_LOGGING:-}"
+#      - CZECHIDM_MAIL_ENABLED="${CZECHIDM_MAIL_ENABLED:-false}"
+#      - CZECHIDM_MAIL_PROTOCOL="${CZECHIDM_MAIL_PROTOCOL:-smtps}"
+#      - CZECHIDM_MAIL_HOST="${CZECHIDM_MAIL_HOST:-mail-relay.example}"
+#      - CZECHIDM_MAIL_PORT="${CZECHIDM_MAIL_PORT:-465}"
+#      - CZECHIDM_MAIL_USER="${CZECHIDM_MAIL_USER:-idm-mailer}"
+#      - CZECHIDM_MAIL_PASSFILE="${CZECHIDM_MAIL_PASSFILE:-/run/secrets/mailer.pwfile}"
+#      - CZECHIDM_MAIL_SENDER="${CZECHIDM_MAIL_SENDER:-czechidm@czechidm.example}"
+#      - CZECHIDM_MAX_UPLOAD_SIZE="${CZECHIDM_MAX_UPLOAD_SIZE:-20MB}"
+    volumes:
+      - type: bind
+        source: ./idm_db.pwfile
+        target: /run/secrets/db.pwfile
+        read_only: true
+      - type: bind
+        source: ./idm_jwt.pwfile
+        target: /run/secrets/jwt.pwfile
+        read_only: true
+      # This directory holds additional configuration that is appended to generated application.properties file.
+      # Works like standard .d/ directory. Filenames have to end with .properties .
+      - type: bind
+        source: ./application.properties.d
+        target: /idmstart/application.properties.d
+        read_only: true
+#      - type: bind
+#        source: ./idm_mailer.pwfile
+#        target: /run/secrets/mailer.pwfile
+#        read_only: true
+# This is for binding folder with PEM certificates to import into truststore.
+# It comes from bcv-tomcat baseimage.
+#      - type: bind
+#        source: ./certs
+#        target: /opt/tomcat/truststore/certs
+#        read_only: true
+# This is an example of adding single jar to IdM modules.
+#      - type: bind
+#        source: ./jsch-0.1.53.jar
+#        target: /idmbuild/modules/jsch-0.1.53.jar
+#        read_only: true
+
+  postgres:
+    image: postgres:14-alpine
+    hostname: postgres
+    # env_file: environment.env
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-czechidm}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-demo}
+      - POSTGRES_USER=${POSTGRES_USER:-czechidm}
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/postgresql/data
+
+#       - type: bind
+#         source: ./pg_data
+#         target: /var/lib/postgresql/data
+#         read_only: false
+#       #- ./pg_data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+
+# ######################## SECRETS ########################
+# This is to emulate working with secrets.
+# If using mounted secret with DockerCE, set env variable DOCKER_SECURE_SECRETS=yes .
+# If you do not mount the secret, container will create its own.
+#    volumes:
+#      - type: bind
+#        source: ./idm_secret.key
+#        target: /run/secrets/secret.key
+#        read_only: true
+#
+# Secrets do not work in Docker CE, they only work with Swarm.
+# On the CE they are emulated by bind with rw-rw-r-- privileges
+# making the whole thing highly insecure.
+#
+# For those reasons, we simply emulate them with mounted file.
+# But we expect it to be mounted as a proper secret under /run/secrets/secret.key .
+#
+# For the curious, this is how to write proper secrets config:
+#
+# Global secrets definition
+#secrets:
+#  idm-secret-key:
+#    file: ./idm_secret.key
+#
+# Secrets stanza in the services.<service> config,
+# secrets are mounted under /run/secrets/<target> .
+#    secrets:
+#      - source: idm-secret-key
+#        target: secret.key
+#        uid: '999'
+#        gid: '998'
+#        mode: 0440
